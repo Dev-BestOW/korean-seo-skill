@@ -10,7 +10,8 @@
 - 사이트맵의 모든 쪽: 상태 200, <title> 1개·40자, description 있음·80자, 제목=설명 아님,
   h1 1개, canonical(절대 주소·자기 자신), og:type/title/description/image/url, viewport, utf-8,
   noindex/nofollow, 파비콘 href 절대 주소·같은 rel 중복, img alt, javascript: 링크, 같은 호스트 http 링크,
-  JSON-LD 파싱·BreadcrumbList 이름("홈"·"top" 같은 일반 낱말)
+  JSON-LD 파싱·BreadcrumbList 이름("홈"·"top" 같은 일반 낱말), 첫 화면 WebSite(name) — 구글 사이트 이름
+- 구글: 파비콘이 SVG 뿐인지(구글 형식 목록에 SVG 없음), HTML 2MB 초과(Googlebot 은 앞 2MB 만 읽음)
 - 사이트 전체: 중복 제목·설명, og:image 를 몇 쪽이 같이 쓰는지
 표준 라이브러리만 쓴다(설치 없음).
 """
@@ -58,7 +59,7 @@ def sitemap_urls(url, depth=0):
     return locs
 
 
-def check_page(url, host, issues, titles, descs, ogimgs):
+def check_page(url, host, issues, titles, descs, ogimgs, is_home=False):
     status, _, body = get(url)
     if status != 200:
         issues['상태 200 아님'].append(f'{status} {url}')
@@ -109,12 +110,17 @@ def check_page(url, host, issues, titles, descs, ogimgs):
         issues['파비콘 href 가 상대 주소'].append(url)
     if any(n > 1 for n in collections.Counter(r for r, _ in icons).values()):
         issues['같은 rel 의 파비콘이 여러 개'].append(url)
+    if icons and all(href.split('?')[0].lower().endswith('.svg') for _, href in icons):
+        issues['파비콘이 SVG 뿐(구글 형식 목록에 없음 — PNG·ICO 48px 넘게)'].append(url)
+    if len(body) > 2 * 1024 * 1024:
+        issues['HTML 2MB 초과(Googlebot 은 앞 2MB 만 읽음)'].append(f'{len(body)} {url}')
     if any(not re.search(r'\balt=', i) for i in re.findall(r'<img\b[^>]*>', t)):
         issues['alt 없는 img'].append(url)
     if re.search(r'href="javascript:', t):
         issues['javascript: 링크'].append(url)
     if re.search(r'(?:href|src)="http://' + re.escape(host), t):
         issues['같은 호스트 http 링크(https 로)'].append(url)
+    has_website = [False]
     for block in re.findall(r'<script[^>]*type="application/ld\+json"[^>]*>(.*?)</script>', t, re.S):
         try:
             data = json.loads(block)
@@ -122,12 +128,16 @@ def check_page(url, host, issues, titles, descs, ogimgs):
             issues['JSON-LD 파싱 실패'].append(url)
             continue
         for obj in data if isinstance(data, list) else data.get('@graph', [data]):
+            if isinstance(obj, dict) and obj.get('@type') == 'WebSite' and obj.get('name'):
+                has_website[0] = True
             if isinstance(obj, dict) and obj.get('@type') == 'BreadcrumbList':
                 for el in obj.get('itemListElement', []):
                     name = el.get('name') or (el.get('item') or {}).get('name') or ''
                     if name.strip().lower() in GENERIC_CRUMBS:
                         issues['BreadcrumbList 이름이 일반 낱말("홈" 등)'].append(f'"{name}" {url}')
                         break
+    if is_home and not has_website[0]:
+        issues['첫 화면에 WebSite JSON-LD(name) 없음 — 구글 사이트 이름'].append(url)
 
 
 def main():
@@ -164,7 +174,7 @@ def main():
     issues = collections.defaultdict(list)
     titles, descs, ogimgs = collections.defaultdict(list), collections.defaultdict(list), collections.Counter()
     for u in urls[: args.limit]:
-        check_page(u, host, issues, titles, descs, ogimgs)
+        check_page(u, host, issues, titles, descs, ogimgs, is_home=u.rstrip('/') == origin)
     for t, us in titles.items():
         if len(us) > 1:
             issues['같은 title 을 쓰는 쪽'].append(f'{len(us)}쪽 "{t[:40]}"')

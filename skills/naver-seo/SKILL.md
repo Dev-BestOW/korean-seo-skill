@@ -1,14 +1,15 @@
 ---
 name: naver-seo
-description: Use when creating or editing public web pages, page metadata (title, meta description, canonical, Open Graph, favicon, JSON-LD breadcrumbs), robots.txt, sitemaps, RSS feeds, or blog post titles/descriptions for a Korean-language site that should be found on Naver or Google search — 네이버 검색 노출, 서치어드바이저, 웹마스터 가이드, SEO, 검색 유입, 블로그 제목·설명 작성, 사이트맵·RSS 제출.
+description: Use when creating or editing public web pages, page metadata (title, meta description, canonical, Open Graph, favicon, site name, JSON-LD breadcrumbs/Article/WebSite), robots.txt, sitemaps, RSS feeds, publish/updated dates, or blog post titles/descriptions for a Korean-language site that should be found on Naver or Google search (including Google AI Overviews) — 네이버 검색 노출, 서치어드바이저, 구글 Search Console, 웹마스터 가이드, SEO, GEO, 검색 유입, 블로그 제목·설명 작성, 사이트맵·RSS 제출.
 ---
 
-# 네이버 검색 노출 점검 (Naver Search Advisor)
+# 네이버·구글 검색 노출 점검 (Naver Search Advisor · Google Search Central)
 
 ## 핵심
 
 네이버 서치어드바이저 웹마스터 가이드는 **숫자로 된 기준**(제목 40자·설명 80자 등)과 **네이버에만 있는 규칙**(이동 경로에 "홈" 금지, 파비콘 절대 경로)을 둔다. 일반 SEO 상식만으로는 이것들을 놓친다.
 그리고 **검색 유입을 늘리려고 키워드를 채우거나 제목을 자주 바꾸면 오히려 불이익**을 받는다.
+구글 Search Central 은 숫자 기준은 느슨하지만(제목·설명 길이 제한 없음) **네이버와 다른 규칙**이 있다 — 아래 "구글이 다른 점". 두 곳 모두에 맞추려면 더 엄격한 쪽을 따른다.
 
 ## 메타를 만들거나 고칠 때의 출력 형식 (필수)
 
@@ -22,6 +23,8 @@ description: Use when creating or editing public web pages, page metadata (title
 | 낱말 반복 | … | 한 필드 안에서 같은 낱말 2번 이상 금지 | ✓/✗ |
 | canonical·파비콘·og:url·og:image | … | 절대 주소(`https://…`) | ✓/✗ |
 | 파비콘 rel | … | 같은 rel 은 하나만 | ✓/✗ |
+| 파비콘 형식·크기 | … | PNG·ICO, 정사각형, 48px 넘게(SVG 만 있으면 ✗ — 구글 형식 목록에 없음) | ✓/✗ |
+| 첫 화면 사이트 이름 | … | `WebSite` JSON-LD `name`·`url` (첫 화면을 다룰 때만) | ✓/✗ |
 | BreadcrumbList 이름 | … | "홈"·"top"·"메인" 같은 일반 낱말 금지 — 사이트 이름 등 | ✓/✗ |
 
 ✗ 가 있으면 고친 값을 다시 표로 낸 뒤에 끝낸다. 사이트 이름(`… | 사이트명`)을 붙이면 40자를 넘는 경우가 많다 — 넘으면 사이트 이름을 뺀다.
@@ -41,7 +44,8 @@ description: Use when creating or editing public web pages, page metadata (title
 | "제목이 조금 길어도 내용이 더 잘 설명된다" | 40자를 넘으면 검색 결과에서 잘리고 사이트 간단 체크에서 경고. 사이트 이름부터 뺀다 |
 | "설명은 길수록 정보가 많다" | 80자, 1~2문장. 글 내용 나열은 본문에서 |
 | "Breadcrumb 첫 항목은 원래 '홈'이다" | 구글은 괜찮지만 네이버 가이드는 일반 낱말 대신 쪽을 설명하는 이름을 요구한다 |
-| "파비콘은 /favicon.svg 면 된다" | 네이버는 href 절대 경로를 요구한다 |
+| "파비콘은 /favicon.svg 면 된다" | 네이버는 href 절대 경로를 요구하고, **구글이 적은 파비콘 형식(BMP·GIF·ICO·PNG·JPEG·PPM·TIFF)에 SVG 는 없다** — PNG(48px 넘게, 예: 96×96)나 ICO 를 쓴다 |
+| "날짜만 오늘로 바꾸면 최신 글로 보인다" | 구글은 내용이 크게 바뀌지 않았는데 날짜를 바꾸는 것을 하지 말라고 하고, 부정확한 lastmod 는 아예 믿지 않는다. 실제로 고친 글만 날짜를 바꾼다 |
 
 ## 점검표
 
@@ -50,7 +54,7 @@ description: Use when creating or editing public web pages, page metadata (title
 - `meta description` 80자 이내 1~2문장, 쪽마다 고유, title 을 되풀이하지 않음. 본문에 실제로 있는 내용만.
 - `link rel="canonical"` 절대 주소. 메인 쪽은 canonical 보다 HTTP 301 로 대표 주소를 정한다.
 - OG: `og:type`·`og:title`·`og:description`·`og:image`·`og:url`. og:image 는 150×150 초과, 5,000 byte 이상, 가로:세로 3:1 이내, **쪽마다 다른 이미지**(여러 쪽에 반복되는 로고·배너는 대표 이미지로 안 쓰일 수 있음).
-- 파비콘: 정사각형 16px 이상(32px 이상 권장), ICO·PNG·GIF·JPEG·SVG 가능, href **절대 경로**, 같은 rel 하나, 경로를 자주 바꾸지 않는다. 우선순위 shortcut icon > icon > /favicon.ico > apple-touch-icon.
+- 파비콘: 정사각형, href **절대 경로**, 같은 rel 하나, 경로를 자주 바꾸지 않는다. **두 곳 모두 되는 형식은 PNG·ICO**(네이버는 SVG 도 되지만 구글 목록에 SVG 없음) — 크기는 48px 넘게(구글 권장, 예: 96×96), 네이버 권장 32px 이상도 함께 충족. 구글은 첫 화면의 link 만 보고 호스트마다 하나. 네이버 우선순위 shortcut icon > icon > /favicon.ico > apple-touch-icon.
 - `meta viewport`(반응형), `meta charset` 이 서버 인코딩과 같게, h1 하나, 이미지 `alt`.
 - 링크는 `<a href="절대 또는 경로">` — `javascript:` 링크·onclick 이동·`#`/`#!` 조각 주소로 쪽을 나누지 않는다(네이버는 # 뒤를 버린다).
 - 검색에서 빼려면 `meta robots noindex` — 이때 robots.txt 로 막지 않는다(막으면 noindex 를 못 읽는다).
@@ -73,6 +77,21 @@ description: Use when creating or editing public web pages, page metadata (title
 - `BreadcrumbList` 이름은 쪽을 설명하는 낱말, 넓은 것 → 좁은 것 순서.
 - 연관 채널(`Person`/`Organization` + `sameAs`)은 사이트 루트 쪽에. 네이버가 인식하는 채널은 네이버 블로그·스마트스토어·지식iN·치지직·클립, 당근·스레드·인스타그램·유튜브·카카오스토리·카카오톡 채널·티스토리·틱톡·페이스북·X 뿐이다(GitHub·velog 등은 목록에 없음).
 
+## 구글이 다른 점 (Google Search Central, 2026-11-20 기준)
+
+- **제목·설명 길이 제한은 없다**(기기 폭에 맞춰 자른다). 네이버 40·80자를 지키면 구글에서도 문제없다. 구글은 title·h1·og:title·링크 글자 등을 보고 제목을 **바꿔서 보여 줄 수 있다** — 화면의 가장 큰 제목(h1)과 title 을 같은 뜻으로 맞춘다. 제목 언어는 본문 언어와 같게.
+- **사이트 이름**은 첫 화면의 `WebSite` JSON-LD(`name`, 필요하면 `alternateName`, `url`)로 정한다 — 첫 화면에만, 서브디렉터리는 불가. og:site_name·title 과 같은 이름을 쓴다.
+- **날짜**: 화면에 보이는 날짜("게시"·"수정")와 `datePublished`·`dateModified`(시간대 포함 ISO 8601)를 일치시킨다. 미래 날짜·사건 날짜 금지. 사이트맵 `lastmod` 는 본문·구조화 데이터·링크가 **의미 있게 바뀐 때만** — 부정확하면 구글이 무시한다. `priority`·`changefreq` 는 구글이 쓰지 않는다.
+- **AI 개요·AI 모드**: 따로 할 일이 없다 — 색인되고 스니펫을 보여 줄 수 있으면 대상이다. 구글 검색은 **llms.txt 를 쓰지 않는다**(다른 AI 도구용으로 두는 건 괜찮음). 글을 잘게 쪼개거나 질문마다 쪽을 만드는 것은 효과가 없고, 대량으로 만들면 스팸 정책(scaled content abuse·doorway) 대상. `nosnippet`·`max-snippet`·`data-nosnippet` 은 AI 개요 인용도 막는다.
+- **canonical 은 힌트**다(리다이렉트 > canonical > 사이트맵 순으로 강함). 자기 자신을 가리키는 canonical 을 둔다, 절대 주소, JS 로 다른 값으로 바꾸지 않는다, # 조각 주소 금지.
+- **noindex 는 robots.txt 에 쓸 수 없다**(meta 또는 X-Robots-Tag). robots.txt 로 막힌 쪽도 링크가 있으면 주소만 색인될 수 있다.
+- **리다이렉트**: 301·308 과 0초 meta refresh 는 영구, 302·307 과 지연 meta refresh 는 임시로 본다. JS 리다이렉트는 최후의 수단. 구글은 10번까지 따라가지만 네이버 기준(5번 미만)을 따른다. 주소를 옮기면 리다이렉트를 1년 이상 유지.
+- **크기**: Googlebot 은 HTML 의 앞 2MB 만 읽는다(압축 전). 사이트맵은 구글 50MB·5만 URL 이지만 네이버 10MB 를 따른다. robots.txt 는 500KiB.
+- **구조화 데이터**: 화면에 보이는 내용만 표시, JSON-LD 권장. `Article`/`BlogPosting` 은 필수 속성이 없고 headline·image(5만 픽셀 이상, 16:9·4:3·1:1)·datePublished·dateModified·author(name 에 이름만, url 또는 sameAs) 권장. `Organization` logo 는 112×112 이상. `BreadcrumbList` 는 ListItem 2개 이상, 첫 화면 항목은 없어도 된다.
+- **쓰지 않는 것**: `meta keywords`, `lang` 속성(본문으로 언어 판단), `rel=next/prev`, `noarchive`. 내용 길이·소제목 개수·E-E-A-T "점수" 같은 목표는 없다.
+- **Core Web Vitals**(순위에 쓰임): LCP 2.5초 이내, INP 200ms 미만, CLS 0.1 미만.
+- 반영에는 며칠~몇 주. Search Console 의 URL 검사로 수집 요청(같은 주소를 여러 번 요청해도 빨라지지 않음).
+
 ## 자동 점검 도구
 
 숫자로 셀 수 있는 것은 스크립트로 확인한다(스킬 폴더 기준 경로).
@@ -90,4 +109,4 @@ node scripts/check-meta.mjs src/content/posts
 
 ## 더 보기
 
-가이드 문서별 요약과 원문 주소는 [reference.md](reference.md). 2026-11-20 에 전체 54개 문서를 읽고 정리했다 — 가이드가 바뀌었을 수 있으니 기준이 중요하면 원문을 다시 확인한다.
+네이버 가이드 문서별 요약과 원문 주소는 [reference.md](reference.md)(2026-11-20 전체 54개 문서), 구글은 [google-reference.md](google-reference.md)(같은 날 핵심 44쪽 정독, 나머지 훑음). 가이드가 바뀌었을 수 있으니 기준이 중요하면 원문을 다시 확인한다.
