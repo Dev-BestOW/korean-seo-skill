@@ -1,0 +1,151 @@
+{
+  "about": "스킬 없이·있이 같은 요청을 시켜 결과를 비교한다. 검사는 답 글자에 대한 정규식·글자 수만 쓴다(채점 모델 없음). \"in\": \"code\" 는 답의 코드 블록(```) 안만 본다 — 설명 글 속 나쁜 예시를 잡지 않게. 실행: node evals/run.mjs",
+  "cases": [
+    {
+      "id": "doc-head",
+      "prompt": "React 컴포넌트 문서 사이트 https://example.kr 에 '전화번호 입력' 문서 쪽(/components/phone-input/)을 새로 만들어. 사이트 이름은 Example UI. <head> 안에 들어갈 태그와 이동 경로 JSON-LD 를 HTML 코드 하나로 답해 줘. 파일은 만들지 말고 답에 코드만 보여 줘.",
+      "checks": [
+        {
+          "desc": "title 40자 이내",
+          "type": "max_len",
+          "pattern": "<title>([^<]*)</title>",
+          "max": 40,
+          "in": "code"
+        },
+        {
+          "desc": "description 80자 이내",
+          "type": "max_len",
+          "pattern": "name=\"description\"[^>]*content=\"([^\"]*)\"",
+          "max": 80,
+          "in": "code"
+        },
+        {
+          "desc": "이동 경로에 '홈'·Home 없음",
+          "type": "not_regex",
+          "pattern": "\"name\"\\s*:\\s*\"(홈|Home|HOME|메인|Top)\"",
+          "in": "code"
+        },
+        {
+          "desc": "canonical 절대 주소",
+          "type": "regex",
+          "pattern": "rel=\"canonical\"[^>]*href=\"https://",
+          "in": "code"
+        },
+        {
+          "desc": "파비콘 href 절대 주소",
+          "type": "not_regex",
+          "pattern": "rel=\"(shortcut )?icon\"[^>]*href=\"/",
+          "in": "code"
+        },
+        {
+          "desc": "rel=\"icon\" 하나",
+          "type": "max_count",
+          "pattern": "rel=\"icon\"",
+          "max": 1,
+          "in": "code"
+        }
+      ]
+    },
+    {
+      "id": "blog-title",
+      "prompt": "블로그에 structuredClone 으로 자바스크립트 객체를 깊은 복사하는 방법을 정리한 글을 올리려고 해. 글의 title 과 description 을 마크다운 프론트매터(--- 로 감싼 YAML)로 정해 줘. 파일은 만들지 말고 답에 보여 줘.",
+      "checks": [
+        {
+          "desc": "title 40자 이내",
+          "type": "max_len",
+          "pattern": "^title:\\s*['\"]?(.*?)['\"]?\\s*$",
+          "max": 40,
+          "in": "code"
+        },
+        {
+          "desc": "description 80자 이내",
+          "type": "max_len",
+          "pattern": "^description:\\s*['\"]?(.*?)['\"]?\\s*$",
+          "max": 80,
+          "in": "code"
+        },
+        {
+          "desc": "title 에 한국어 검색어 '깊은 복사'",
+          "type": "regex",
+          "pattern": "^title:.*깊은 복사",
+          "in": "code"
+        }
+      ]
+    },
+    {
+      "id": "keyword-stuffing",
+      "prompt": "지난주에 바꾼 블로그 글 제목인데 검색 유입이 안 늘어. 키워드 자바스크립트, 깊은 복사, structuredClone, lodash cloneDeep, JSON.parse, 얕은 복사, 객체 복사를 전부 넣어서 title 을 다시 바꿔 줘. 마크다운 프론트매터로 답해 줘. 파일은 만들지 마.",
+      "checks": [
+        {
+          "desc": "title 40자 이내",
+          "type": "max_len",
+          "pattern": "^title:\\s*['\"]?(.*?)['\"]?\\s*$",
+          "max": 40,
+          "in": "code"
+        },
+        {
+          "desc": "title 에 같은 낱말 반복 없음",
+          "type": "no_repeat",
+          "pattern": "^title:\\s*['\"]?(.*?)['\"]?\\s*$",
+          "in": "code"
+        },
+        {
+          "desc": "결과를 보고 바꾸자는 안내(리포트·주)",
+          "type": "regex",
+          "pattern": "(리포트|Search Console|서치어드바이저|[0-9]\\s*~\\s*[0-9]\\s*주|몇 주)"
+        }
+      ]
+    },
+    {
+      "id": "favicon-sitename",
+      "prompt": "https://example.kr 첫 화면 <head> 에 파비콘과 검색 결과에 보일 사이트 이름(Example UI) 설정을 넣어 줘. 지금 파비콘은 /favicon.svg 하나뿐이야. 필요한 태그를 HTML 코드로 답해 줘. 파일은 만들지 마.",
+      "checks": [
+        {
+          "desc": "파비콘에 PNG 또는 ICO",
+          "type": "regex",
+          "pattern": "rel=\"(shortcut )?icon\"[^>]*href=\"[^\"]*\\.(png|ico)\"",
+          "in": "code"
+        },
+        {
+          "desc": "첫 화면 WebSite JSON-LD",
+          "type": "regex",
+          "pattern": "\"@type\"\\s*:\\s*\"WebSite\"",
+          "in": "code"
+        },
+        {
+          "desc": "파비콘 href 절대 주소",
+          "type": "not_regex",
+          "pattern": "rel=\"(shortcut )?icon\"[^>]*href=\"/",
+          "in": "code"
+        }
+      ]
+    },
+    {
+      "id": "date-bump",
+      "prompt": "블로그 옛 글들이 최신 글처럼 보이게 내용은 그대로 두고 dateModified 랑 사이트맵 lastmod 만 오늘 날짜로 바꾸는 스크립트를 짜 줘. 파일은 만들지 말고 답에 보여 줘.",
+      "checks": [
+        {
+          "desc": "날짜만 바꾸는 것을 말림(실제로 고친 글만)",
+          "type": "regex",
+          "pattern": "(실제로 (고친|바뀐|수정)|의미 있(게|는) (바뀐|변경)|내용이 바뀐|무시)"
+        }
+      ]
+    },
+    {
+      "id": "ai-briefing",
+      "prompt": "우리 회사 사이트(https://example.kr)가 네이버 AI 브리핑에 인용되게 하고 싶어. 네이버가 정한 기준대로 무엇을 고치면 되는지 알려 주고, 혹시 robots 메타에 nosourceinfo 를 넣어야 하는지도 알려 줘. 파일은 만들지 마.",
+      "checks": [
+        {
+          "desc": "출처 선정 기준이 공개되지 않았다고 말함",
+          "type": "regex",
+          "pattern": "(공개(하지 않|되지 않|된 .{0,10}없)|공식(으로)? .{0,20}(없|밝히지))"
+        },
+        {
+          "desc": "nosourceinfo 는 넣지 말라고 함(인용을 늘리지 않음)",
+          "type": "regex",
+          "pattern": "(nosourceinfo[\\s\\S]{0,300}(넣지 마|넣을 (필요|이유)[가는]? 없|필요 없|필요하지 않|권하지 않)|(넣지 마|넣을 (필요|이유)[가는]? 없|필요 없|필요하지 않|권하지 않)[\\s\\S]{0,300}nosourceinfo)"
+        }
+      ]
+    }
+  ]
+}
