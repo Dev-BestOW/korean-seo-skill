@@ -1,4 +1,4 @@
-# naver-seo-skill
+# korean-seo-skill
 
 > A Claude Code skill that checks web pages, sitemaps, RSS feeds and blog post titles against the Naver Search Advisor webmaster guide and Google Search Central (docs in Korean).
 
@@ -16,28 +16,39 @@
 ### Claude Code (플러그인 마켓플레이스)
 
 ```
-/plugin marketplace add Dev-BestOW/naver-seo-skill
-/plugin install naver-seo@naver-seo-skill
+/plugin marketplace add Dev-BestOW/korean-seo-skill
+/plugin install korean-seo@korean-seo-skill
 ```
 
 **두 줄 모두 실행해야 해요.** 첫 줄은 이 저장소를 마켓플레이스로 **등록**만 하고(한 번만), 둘째 줄이 플러그인을 **설치**해요. 첫 줄만 하면 스킬이 켜지지 않아요.
-설치한 뒤 `/reload-plugins` 를 실행하거나 Claude Code 를 다시 열면 바로 쓸 수 있어요. 새 버전은 `/plugin update naver-seo@naver-seo-skill` 로 받아요.
-명령 대신 `/plugin` 메뉴에서 Marketplaces › naver-seo-skill › naver-seo › Install 을 골라도 같아요.
+설치한 뒤 `/reload-plugins` 를 실행하거나 Claude Code 를 다시 열면 바로 쓸 수 있어요. 새 버전은 `/plugin update korean-seo@korean-seo-skill` 로 받아요.
+명령 대신 `/plugin` 메뉴에서 Marketplaces › korean-seo-skill › korean-seo › Install 을 골라도 같아요.
 
-설치하면 웹 페이지 메타·사이트맵·RSS·블로그 제목을 다룰 때 스킬이 저절로 켜져요. 직접 부르려면 "naver-seo 스킬로 점검해 줘".
+설치하면 웹 페이지 메타·사이트맵·RSS·블로그 제목을 다룰 때 스킬이 저절로 켜져요. 직접 부르려면 "korean-seo 스킬로 점검해 줘".
 
 ### 다른 도구(Agent Skills 형식)
 
-`skills/naver-seo` 폴더를 쓰는 도구의 스킬 폴더에 복사하세요. 예: Claude Code 개인 스킬 `~/.claude/skills/naver-seo`, Codex·Gemini CLI 등 `~/.agents/skills/naver-seo`.
+`skills/korean-seo` 폴더를 쓰는 도구의 스킬 폴더에 복사하세요. 예: Claude Code 개인 스킬 `~/.claude/skills/korean-seo`, Codex·Gemini CLI 등 `~/.agents/skills/korean-seo`.
+
+### 0.2.0 이하(`naver-seo`)를 설치했다면
+
+0.3.0 부터 이름이 `korean-seo` 로 바뀌었어요(구글까지 다루게 되어서). 옛 것을 지우고 새로 설치해 주세요.
+
+```
+/plugin uninstall naver-seo@naver-seo-skill
+/plugin marketplace remove naver-seo-skill
+/plugin marketplace add Dev-BestOW/korean-seo-skill
+/plugin install korean-seo@korean-seo-skill
+```
 
 ## 검사 도구만 쓰기
 
 ```bash
 # 배포된 사이트 — robots.txt·301·404·사이트맵의 모든 쪽(title·description·canonical·OG·파비콘·h1·alt·JSON-LD 이동 경로)
-python3 skills/naver-seo/scripts/check-site.py https://example.com
+python3 skills/korean-seo/scripts/check-site.py https://example.com
 
 # 마크다운 글 프론트매터(title·description) — 길이 초과면 exit 1(CI 에 넣을 수 있음), 낱말 반복은 경고
-node skills/naver-seo/scripts/check-meta.mjs src/content/posts
+node skills/korean-seo/scripts/check-meta.mjs src/content/posts
 ```
 
 Python 3.8+, Node 18+ 표준 라이브러리만 써요.
@@ -60,7 +71,7 @@ Python 3.8+, Node 18+ 표준 라이브러리만 써요.
 ## 주의
 
 - **네이버·구글 공식 도구가 아니며 두 회사와 관계가 없어요.** 원문은 [네이버 웹마스터 가이드](https://searchadvisor.naver.com/guide)와 [Google Search Central](https://developers.google.com/search/docs?hl=ko)에 있고, 이 저장소의 요약은 원문을 옮긴 것이 아니라 기준만 정리한 거예요.
-- 가이드는 바뀔 수 있어요. 중요한 판단은 원문을 다시 확인하세요(`skills/naver-seo/reference.md`·`google-reference.md` 에 문서별 주소).
+- 가이드는 바뀔 수 있어요. 중요한 판단은 원문을 다시 확인하세요(`skills/korean-seo/reference.md`·`google-reference.md` 에 문서별 주소).
 - 기준을 지켜도 노출·순위가 보장되지는 않아요. 콘텐츠 품질과 외부 링크가 더 중요해요.
 
 ## 기여

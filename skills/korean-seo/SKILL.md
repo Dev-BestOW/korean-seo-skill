@@ -1,5 +1,5 @@
 ---
-name: naver-seo
+name: korean-seo
 description: Use when creating or editing public web pages, page metadata (title, meta description, canonical, Open Graph, favicon, site name, JSON-LD breadcrumbs/Article/WebSite), robots.txt, sitemaps, RSS feeds, publish/updated dates, or blog post titles/descriptions for a Korean-language site that should be found on Naver or Google search (including Google AI Overviews) — 네이버 검색 노출, 서치어드바이저, 구글 Search Console, 웹마스터 가이드, SEO, GEO, 검색 유입, 블로그 제목·설명 작성, 사이트맵·RSS 제출.
 ---
 
