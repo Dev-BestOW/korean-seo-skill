@@ -19,6 +19,10 @@
 /plugin install naver-seo@naver-seo-skill
 ```
 
+**두 줄 모두 실행해야 해요.** 첫 줄은 이 저장소를 마켓플레이스로 **등록**만 하고(한 번만), 둘째 줄이 플러그인을 **설치**해요. 첫 줄만 하면 스킬이 켜지지 않아요.
+설치한 뒤 `/reload-plugins` 를 실행하거나 Claude Code 를 다시 열면 바로 쓸 수 있어요. 새 버전은 `/plugin update naver-seo@naver-seo-skill` 로 받아요.
+명령 대신 `/plugin` 메뉴에서 Marketplaces › naver-seo-skill › naver-seo › Install 을 골라도 같아요.
+
 설치하면 웹 페이지 메타·사이트맵·RSS·블로그 제목을 다룰 때 스킬이 저절로 켜져요. 직접 부르려면 "naver-seo 스킬로 점검해 줘".
 
 ### 다른 도구(Agent Skills 형식)
