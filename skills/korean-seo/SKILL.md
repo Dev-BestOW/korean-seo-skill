@@ -98,13 +98,16 @@ description: Use when creating or editing public web pages, page metadata (title
 
 ```bash
 # 배포된 사이트 — robots·301·404·사이트맵의 모든 쪽을 Yeti 이름으로 검사(표준 라이브러리만)
-python3 scripts/check-site.py https://example.com
+# og:image 파일의 실제 크기·용량·비율, 같은 쪽을 일반 브라우저 이름으로 다시 받아 Yeti 와 비교(클로킹 의심), JS 없이 본문이 비는 쪽도 본다
+python3 scripts/check-site.py https://example.com            # --no-compare: 브라우저 비교 끄기(요청 절반)
 
 # 마크다운 글 프론트매터 title·description — 길이 초과면 exit 1, 낱말 반복은 경고
 node scripts/check-meta.mjs src/content/posts
 ```
 
 낱말 반복 경고는 조사까지 붙여 세는 단순한 방식이라 "미디어 쿼리는 … 컨테이너 쿼리는" 같은 비교 문장도 잡는다 — 읽고 판단한다.
+"JS 없이 본문 글자 100자 미만" 은 검색 화면·짧은 목록 쪽처럼 원래 글이 적은 쪽도 잡는다 — 화면을 자바스크립트로만 그리는 쪽인지 확인한다.
+"Yeti·브라우저 본문 글자 수가 크게 다름" 은 30% 넘게 다를 때다. 로그인·지역·A/B 테스트로 갈리는 쪽이면 검색로봇에게도 같은 내용을 주는지 본다.
 프로젝트에 맞게 `check-meta.mjs` 를 복사해 `check`/`lint` 스크립트에 넣으면 앞으로 쓰는 글도 막을 수 있다.
 
 ## 더 보기

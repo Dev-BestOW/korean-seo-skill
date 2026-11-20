@@ -11,9 +11,12 @@
   h1 1개, canonical(절대 주소·자기 자신), og:type/title/description/image/url, viewport, utf-8,
   noindex/nofollow, 파비콘 href 절대 주소·같은 rel 중복, img alt, javascript: 링크, 같은 호스트 http 링크,
   JSON-LD 파싱·BreadcrumbList 이름("홈"·"top" 같은 일반 낱말), 첫 화면 WebSite(name) — 구글 사이트 이름
-- 구글: 파비콘이 SVG 뿐인지(구글 형식 목록에 SVG 없음), HTML 2MB 초과(Googlebot 은 앞 2MB 만 읽음)
+- 구글: 첫 화면 파비콘이 SVG 뿐인지(구글 형식 목록에 SVG 없음, 구글은 첫 화면 파비콘만 씀), HTML 2MB 초과(Googlebot 은 앞 2MB 만 읽음)
 - 사이트 전체: 중복 제목·설명, og:image 를 몇 쪽이 같이 쓰는지
-표준 라이브러리만 쓴다(설치 없음).
+- og:image 파일(이미지마다 한 번): 절대 주소, 200·image/*, 5,000 byte 이상, 150×150 초과, 가로:세로 3:1 이내(PNG·JPEG·GIF·WebP 머리에서 읽음)
+- 같은 쪽을 일반 브라우저 이름으로도 요청해 Yeti 와 비교: 상태·title 이 다르거나 본문 글자 수가 크게 다르면 클로킹으로 보일 수 있음
+- 자바스크립트를 실행하지 않은 HTML 의 본문 글자가 거의 없으면(화면을 JS 로만 그림) 검색로봇이 내용을 못 읽을 수 있음
+표준 라이브러리만 쓴다(설치 없음). --no-compare 로 브라우저 비교를 끄면 요청이 절반으로 준다.
 """
 import argparse
 import collections
@@ -25,7 +28,15 @@ import urllib.error
 import urllib.request
 
 UA = 'Mozilla/5.0 (compatible; Yeti/1.1; +https://naver.me/spd)'
+BROWSER_UA = (
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+)
 TITLE_MAX, DESC_MAX = 40, 80
+OG_MIN_BYTES, OG_MIN_SIDE, OG_MAX_RATIO = 5000, 150, 3
+# 자바스크립트 없이 본문 글자(공백 제외)가 이보다 적으면 JS 로만 그리는 쪽으로 본다
+JS_ONLY_TEXT = 100
+# Yeti·브라우저 본문 글자 수가 이 비율 넘게 다르면 다른 내용을 주는 것으로 본다(광고·날짜 같은 작은 차이는 넘지 않게)
+UA_TEXT_DIFF = 0.3
 GENERIC_CRUMBS = {'홈', 'home', 'top', '메인', 'main'}
 
 
@@ -37,15 +48,95 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 OPENER = urllib.request.build_opener(NoRedirect)
 
 
-def get(url):
-    req = urllib.request.Request(url, headers={'User-Agent': UA})
+def get(url, ua=UA, follow=False):
+    req = urllib.request.Request(url, headers={'User-Agent': ua})
+    opener = urllib.request.build_opener() if follow else OPENER
     try:
-        with OPENER.open(req, timeout=20) as r:
+        with opener.open(req, timeout=20) as r:
             return r.status, dict(r.headers), r.read()
     except urllib.error.HTTPError as e:
         return e.code, dict(e.headers), e.read()
     except Exception as e:  # DNS·연결 오류
         return 0, {}, str(e).encode()
+
+
+def image_size(b):
+    """PNG·GIF·JPEG·WebP 머리에서 (가로, 세로). 모르는 형식이면 None"""
+    if b[:8] == b'\x89PNG\r\n\x1a\n' and len(b) >= 24:
+        return int.from_bytes(b[16:20], 'big'), int.from_bytes(b[20:24], 'big')
+    if b[:6] in (b'GIF87a', b'GIF89a') and len(b) >= 10:
+        return int.from_bytes(b[6:8], 'little'), int.from_bytes(b[8:10], 'little')
+    if b[:4] == b'RIFF' and b[8:12] == b'WEBP' and len(b) >= 30:
+        kind = b[12:16]
+        if kind == b'VP8 ':
+            return int.from_bytes(b[26:28], 'little') & 0x3FFF, int.from_bytes(b[28:30], 'little') & 0x3FFF
+        if kind == b'VP8L':
+            bits = int.from_bytes(b[21:25], 'little')
+            return (bits & 0x3FFF) + 1, ((bits >> 14) & 0x3FFF) + 1
+        if kind == b'VP8X':
+            return int.from_bytes(b[24:27], 'little') + 1, int.from_bytes(b[27:30], 'little') + 1
+    if b[:2] == b'\xff\xd8':
+        i = 2
+        while i + 9 < len(b):
+            if b[i] != 0xFF:
+                i += 1
+                continue
+            marker = b[i + 1]
+            if marker in (0xD8, 0x01) or 0xD0 <= marker <= 0xD7 or marker == 0xFF:
+                i += 1 if marker == 0xFF else 2
+                continue
+            if 0xC0 <= marker <= 0xCF and marker not in (0xC4, 0xC8, 0xCC):
+                return int.from_bytes(b[i + 7:i + 9], 'big'), int.from_bytes(b[i + 5:i + 7], 'big')
+            i += 2 + int.from_bytes(b[i + 2:i + 4], 'big')
+    return None
+
+
+def check_og_image(img, issues):
+    """네이버 웹마스터 가이드 "콘텐츠 마크업": og:image 150×150 초과·5,000 byte 이상·가로:세로 3:1 이내"""
+    if not img.startswith('http'):
+        issues['og:image 가 상대 주소'].append(img)
+        return
+    status, headers, body = get(img, follow=True)
+    ctype = {k.lower(): v for k, v in headers.items()}.get('content-type', '')
+    if status != 200 or not ctype.startswith('image/'):
+        issues['og:image 를 받을 수 없음(200·image/* 아님)'].append(f'{status} {ctype} {img}')
+        return
+    if len(body) < OG_MIN_BYTES:
+        issues[f'og:image {OG_MIN_BYTES:,} byte 미만'].append(f'{len(body)} byte {img}')
+    size = image_size(body)
+    if not size:
+        issues['og:image 크기를 읽지 못함(PNG·JPEG·GIF·WebP 아님)'].append(f'{ctype} {img}')
+        return
+    w, h = size
+    if w <= OG_MIN_SIDE or h <= OG_MIN_SIDE:
+        issues[f'og:image {OG_MIN_SIDE}×{OG_MIN_SIDE} 이하'].append(f'{w}×{h} {img}')
+    if h and w and max(w, h) / min(w, h) > OG_MAX_RATIO:
+        issues[f'og:image 가로:세로 {OG_MAX_RATIO}:1 넘음'].append(f'{w}×{h} {img}')
+
+
+def page_summary(body):
+    """(title, 본문 글자 수) — 자바스크립트를 실행하지 않은 HTML 기준, 공백 제외"""
+    t = body.decode('utf-8', 'replace')
+    tl = re.search(r'<title[^>]*>(.*?)</title>', t, re.S)
+    m = re.search(r'<body[^>]*>(.*)', t, re.S | re.I)
+    text = m.group(1) if m else t
+    text = re.sub(r'<(script|style|noscript|template|svg)\b.*?</\1>', ' ', text, flags=re.S | re.I)
+    text = html.unescape(re.sub(r'<[^>]+>', ' ', text))
+    return (html.unescape(tl.group(1)).strip() if tl else ''), len(re.sub(r'\s+', '', text))
+
+
+def compare_browser(url, status, body, issues):
+    """Yeti 와 일반 브라우저에 같은 내용을 주는지 — 다르면 클로킹으로 보일 수 있다(네이버·구글 스팸 정책)"""
+    b_status, _, b_body = get(url, ua=BROWSER_UA)
+    if b_status != status:
+        issues['Yeti·브라우저 상태가 다름(클로킹으로 보일 수 있음)'].append(f'Yeti {status} · 브라우저 {b_status} {url}')
+        return
+    y_title, y_len = page_summary(body)
+    b_title, b_len = page_summary(b_body)
+    if y_title != b_title:
+        issues['Yeti·브라우저 title 이 다름'].append(f'"{y_title[:30]}" · "{b_title[:30]}" {url}')
+    if max(y_len, b_len) and abs(y_len - b_len) / max(y_len, b_len) > UA_TEXT_DIFF:
+        issues['Yeti·브라우저 본문 글자 수가 크게 다름'].append(f'Yeti {y_len} · 브라우저 {b_len} {url}')
 
 
 def sitemap_urls(url, depth=0):
@@ -59,11 +150,18 @@ def sitemap_urls(url, depth=0):
     return locs
 
 
-def check_page(url, host, issues, titles, descs, ogimgs, is_home=False):
+def check_page(url, host, issues, titles, descs, ogimgs, is_home=False, compare=True):
     status, _, body = get(url)
+    if compare:
+        compare_browser(url, status, body, issues)
     if status != 200:
         issues['상태 200 아님'].append(f'{status} {url}')
         return
+    _, text_len = page_summary(body)
+    if text_len < JS_ONLY_TEXT:
+        issues[f'JS 없이 본문 글자 {JS_ONLY_TEXT}자 미만(화면을 자바스크립트로만 그리는지 확인 — 그렇다면 서버 렌더링 권장)'].append(
+            f'{text_len}자 {url}'
+        )
     t = body.decode('utf-8', 'replace')
     head = t.split('</head>')[0]
     tl = re.findall(r'<title[^>]*>(.*?)</title>', head, re.S)
@@ -110,8 +208,9 @@ def check_page(url, host, issues, titles, descs, ogimgs, is_home=False):
         issues['파비콘 href 가 상대 주소'].append(url)
     if any(n > 1 for n in collections.Counter(r for r, _ in icons).values()):
         issues['같은 rel 의 파비콘이 여러 개'].append(url)
-    if icons and all(href.split('?')[0].lower().endswith('.svg') for _, href in icons):
-        issues['파비콘이 SVG 뿐(구글 형식 목록에 없음 — PNG·ICO 48px 넘게)'].append(url)
+    # 구글은 호스트마다 첫 화면의 파비콘만 쓴다 — 다른 쪽(예: /storybook/)의 SVG 는 검사하지 않는다
+    if is_home and icons and all(href.split('?')[0].lower().endswith('.svg') for _, href in icons):
+        issues['첫 화면 파비콘이 SVG 뿐(구글 형식 목록에 없음 — PNG·ICO 48px 넘게)'].append(url)
     if len(body) > 2 * 1024 * 1024:
         issues['HTML 2MB 초과(Googlebot 은 앞 2MB 만 읽음)'].append(f'{len(body)} {url}')
     if any(not re.search(r'\balt=', i) for i in re.findall(r'<img\b[^>]*>', t)):
@@ -144,6 +243,7 @@ def main():
     ap = argparse.ArgumentParser(description='네이버 웹마스터 가이드 기준 사이트 점검')
     ap.add_argument('origin', help='https://example.com (끝 / 없이)')
     ap.add_argument('--limit', type=int, default=500, help='사이트맵에서 검사할 최대 쪽 수')
+    ap.add_argument('--no-compare', action='store_true', help='일반 브라우저 이름으로 다시 요청해 비교하지 않음(요청 절반)')
     args = ap.parse_args()
     origin = args.origin.rstrip('/')
     host = origin.split('//', 1)[1]
@@ -174,7 +274,9 @@ def main():
     issues = collections.defaultdict(list)
     titles, descs, ogimgs = collections.defaultdict(list), collections.defaultdict(list), collections.Counter()
     for u in urls[: args.limit]:
-        check_page(u, host, issues, titles, descs, ogimgs, is_home=u.rstrip('/') == origin)
+        check_page(u, host, issues, titles, descs, ogimgs, is_home=u.rstrip('/') == origin, compare=not args.no_compare)
+    for img in ogimgs:
+        check_og_image(img, issues)
     for t, us in titles.items():
         if len(us) > 1:
             issues['같은 title 을 쓰는 쪽'].append(f'{len(us)}쪽 "{t[:40]}"')
@@ -185,7 +287,7 @@ def main():
     if shared:
         issues['og:image 를 여러 쪽이 같이 씀(대표 이미지로 안 쓰일 수 있음)'].extend(f'{n}쪽 {img}' for img, n in shared)
 
-    print(f'검사한 쪽 {min(len(urls), args.limit)}\n')
+    print(f'검사한 쪽 {min(len(urls), args.limit)}, og:image {len(ogimgs)}개\n')
     if not issues:
         print('✓ 발견된 문제 없음')
         return 0

@@ -9,7 +9,7 @@
 - **네이버만의 규칙:** 이동 경로(BreadcrumbList)에 "홈" 같은 일반 낱말 금지, 파비콘 같은 rel 하나, `#` 조각 주소는 버려짐, 연관 채널로 인식하는 서비스 목록
 - **구글이 다른 점:** 파비콘 형식(구글 목록에 SVG 없음 — PNG·ICO 48px 넘게), 첫 화면 `WebSite` JSON-LD 로 사이트 이름, 보이는 날짜와 `dateModified`·`lastmod` 는 실제로 고쳤을 때만, AI 개요는 일반 SEO 와 같음(llms.txt·글 조각내기 불필요), Googlebot 은 HTML 앞 2MB 만, Core Web Vitals 기준
 - **불이익을 피하는 법:** 키워드 반복·낚시성 제목·검색만을 위한 잦은 제목 변경 — "키워드 다 넣어 줘" 같은 요청에도 기준 안의 제목과 나머지 키워드를 둘 곳을 제안
-- **검사 도구:** 배포된 사이트를 네이버 검색로봇(Yeti) 이름으로 점검하고 구글 항목(SVG 파비콘·사이트 이름·2MB)도 함께 확인(`check-site.py`), 마크다운 글 제목·설명 검사(`check-meta.mjs`) — 둘 다 설치할 것 없음
+- **검사 도구:** 배포된 사이트를 네이버 검색로봇(Yeti) 이름으로 점검하고 구글 항목(SVG 파비콘·사이트 이름·2MB)도 함께 확인, og:image 파일의 실제 크기·용량·비율을 재고, 일반 브라우저로 받은 응답과 비교해 클로킹·자바스크립트로만 그리는 쪽을 찾아요(`check-site.py`), 마크다운 글 제목·설명 검사(`check-meta.mjs`) — 둘 다 설치할 것 없음
 
 ## 설치
 
@@ -45,7 +45,8 @@
 
 ```bash
 # 배포된 사이트 — robots.txt·301·404·사이트맵의 모든 쪽(title·description·canonical·OG·파비콘·h1·alt·JSON-LD 이동 경로)
-python3 skills/korean-seo/scripts/check-site.py https://example.com
+# + og:image 크기(150×150 초과)·용량(5,000 byte)·비율(3:1), Yeti·일반 브라우저 응답 비교, JS 없이 본문이 비는 쪽
+python3 skills/korean-seo/scripts/check-site.py https://example.com   # --no-compare 로 브라우저 비교 끄기(요청 절반)
 
 # 마크다운 글 프론트매터(title·description) — 길이 초과면 exit 1(CI 에 넣을 수 있음), 낱말 반복은 경고
 node skills/korean-seo/scripts/check-meta.mjs src/content/posts
