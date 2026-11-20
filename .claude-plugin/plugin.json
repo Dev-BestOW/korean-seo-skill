@@ -1,0 +1,13 @@
+{
+  "name": "naver-seo",
+  "description": "네이버 서치어드바이저 웹마스터 가이드 기준으로 웹 페이지 메타·사이트맵·RSS·블로그 글 제목을 점검하는 스킬 (Korean SEO checklist for Naver Search Advisor)",
+  "version": "0.1.0",
+  "author": {
+    "name": "Dev-BestOW",
+    "url": "https://github.com/Dev-BestOW"
+  },
+  "homepage": "https://github.com/Dev-BestOW/naver-seo-skill",
+  "repository": "https://github.com/Dev-BestOW/naver-seo-skill",
+  "license": "MIT",
+  "keywords": ["seo", "naver", "search-advisor", "korean", "webmaster", "sitemap", "rss", "skills"]
+}

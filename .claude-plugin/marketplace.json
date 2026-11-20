@@ -1,0 +1,18 @@
+{
+  "name": "naver-seo-skill",
+  "description": "네이버 검색 노출 점검 스킬 마켓플레이스",
+  "owner": {
+    "name": "Dev-BestOW",
+    "url": "https://github.com/Dev-BestOW"
+  },
+  "plugins": [
+    {
+      "name": "naver-seo",
+      "description": "네이버 서치어드바이저 웹마스터 가이드 기준으로 웹 페이지 메타·사이트맵·RSS·블로그 글 제목을 점검하는 스킬",
+      "version": "0.1.0",
+      "source": "./",
+      "category": "development",
+      "tags": ["seo", "naver", "korean"]
+    }
+  ]
+}
