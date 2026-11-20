@@ -38,11 +38,12 @@
           "in": "code"
         },
         {
-          "desc": "rel=\"icon\" 하나",
-          "type": "max_count",
+          "desc": "rel=\"icon\" 정확히 하나(빠져도 실패)",
+          "type": "count",
           "pattern": "rel=\"icon\"",
           "max": 1,
-          "in": "code"
+          "in": "code",
+          "min": 1
         }
       ]
     },

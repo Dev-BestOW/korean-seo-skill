@@ -43,9 +43,10 @@ export function check(answer, c) {
       const m = text.match(re());
       return { ok: !m, note: m ? m[0].slice(0, 60) : '' };
     }
-    case 'max_count': {
+    case 'max_count': // 옛 이름 — count 와 같다(min 없음)
+    case 'count': {
       const n = captures().length;
-      return { ok: n <= c.max, note: `${n}개` };
+      return { ok: n >= (c.min ?? 0) && n <= (c.max ?? Infinity), note: `${n}개` };
     }
     case 'max_len': {
       const found = captures();
