@@ -43,7 +43,7 @@
 |---|---|
 | canonical (`crawling-indexing/canonicalization`·`consolidate-duplicate-urls`) | 힌트일 뿐. 리다이렉트(강) > rel=canonical(강) > 사이트맵(약). 절대 주소, 자기 자신 canonical, 방법마다 다른 URL 금지, # 금지, robots.txt·noindex 로 canonical 정하지 않기, HTTPS 우선 |
 | 리다이렉트 (`crawling-indexing/301-redirects`) | 영구: 301·308·0초 meta refresh·(최후) JS. 임시: 302·303·307·지연 meta refresh |
-| noindex (`crawling-indexing/block-indexing`·`robots-meta-tag`) | meta 또는 X-Robots-Tag, robots.txt 에는 못 씀, 크롤링이 허용돼야 보임. 규칙 충돌 시 더 엄격한 쪽. noarchive·nocache 는 안 씀 |
+| noindex (`crawling-indexing/block-indexing`·`robots-meta-tag`) | meta 또는 X-Robots-Tag, robots.txt 에는 못 씀, 크롤링이 허용돼야 보임. 규칙 충돌 시 더 엄격한 쪽. noarchive·nocache 는 안 씀. `indexifembedded`: noindex 와 함께일 때만, iframe 으로 끼워진 내용은 끼운 쪽의 일부로 색인 허용 |
 | robots.txt (`crawling-indexing/robots/*`) | 숨기는 수단이 아님(주소는 색인될 수 있음). 루트·UTF-8·500KiB, 24시간 캐시, 사이트맵은 전체 URL |
 | 사이트맵 (`crawling-indexing/sitemaps/*`) | 500쪽 이하·링크가 잘 된 사이트는 없어도 됨. 50MB·5만 URL, 절대 주소, canonical 만, priority·changefreq 무시, lastmod 는 의미 있는 변경만·정확할 때만 사용. 인덱스 파일은 같은 폴더 이하의 사이트맵만 |
 | 링크 (`crawling-indexing/links-crawlable`) | `<a href>` 만 확실히 따라감, 설명적이고 짧은 링크 글자, "여기를 클릭" 금지, 중요한 쪽은 내부 링크 하나 이상, 신뢰하지 않는 곳만 nofollow |
@@ -53,6 +53,7 @@
 | meta 태그 (`crawling-indexing/special-tags`·`valid-page-metadata`) | 지원: description, robots/googlebot, notranslate, google-site-verification, charset, viewport. 안 씀: keywords, lang 속성, rel=next/prev. `<head>` 안에 img·iframe 이 있으면 그 뒤 태그를 못 읽음 |
 | Googlebot (`crawling-indexing/googlebot`·`overview-google-crawlers`) | HTML 앞 2MB(PDF 64MB)만 읽음, 일반 크롤러 15MB |
 | 사이트 이전 (`crawling-indexing/site-move-with-url-changes`) | 옛→새 1:1 301, 한 번에 하나만 바꾸기, 리다이렉트 1년 이상 유지, 주소 변경 도구 |
+| 색인 보고서 (Search Console 도움말 `support.google.com/webmasters/answer/7440203`, 2026-11-23 확인 — 앞부분 원문·뒷부분 요약) | 사유별 뜻: 발견됨(아직 크롤링 안 함)·크롤링됨(가져갔지만 색인 안 함, 흔하고 꼭 문제는 아님)·표준 없는 중복(오류 아님 — 구글이 대표를 고름, URL 검사로 고른 canonical 확인)·리디렉션(할 일 없음). 수정사항 확인은 그 사유의 주소만 다시 보며 보통 2주쯤 |
 | 다시 크롤링 요청 (`crawling-indexing/ask-google-to-recrawl`) | URL 검사(할당량, 반복 요청 무의미), 많으면 사이트맵. 며칠~몇 주 |
 | 페이지 나누기 (`specialty/ecommerce/pagination-and-incremental-page-loading`) | `<a href>` 로 다음 쪽, 첫 쪽을 canonical 로 쓰지 않기, 쪽 번호에 # 금지, 목록 쪽은 제목이 달라도 되고 같아도 됨 |
 | 다국어 (`specialty/international/localized-versions`) | hreflang 은 서로 가리켜야 하고 자기 자신 포함, 절대 주소 |

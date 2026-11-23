@@ -1,6 +1,6 @@
 ---
 name: korean-seo
-description: Use when creating or editing public web pages, page metadata (title, meta description, canonical, Open Graph, favicon, site name, JSON-LD breadcrumbs/Article/WebSite), robots.txt, sitemaps, RSS feeds, publish/updated dates, or blog post titles/descriptions for a Korean-language site that should be found on Naver or Google search (including Google AI Overviews) — 네이버 검색 노출, 서치어드바이저, 구글 Search Console, 웹마스터 가이드, SEO, GEO, 검색 유입, 블로그 제목·설명 작성, 사이트맵·RSS 제출.
+description: Use when creating or editing public web pages, page metadata (title, meta description, canonical, Open Graph, favicon, site name, JSON-LD breadcrumbs/Article/WebSite), robots.txt, sitemaps, RSS feeds, publish/updated dates, Search Console page-indexing report reasons, or blog post titles/descriptions for a Korean-language site that should be found on Naver or Google search (including Google AI Overviews) — 네이버 검색 노출, 서치어드바이저, 구글 Search Console(색인 생성 안 됨·중복 페이지), 웹마스터 가이드, SEO, GEO, 검색 유입, 블로그 제목·설명 작성, 사이트맵·RSS 제출.
 ---
 
 # 네이버·구글 검색 노출 점검 (Naver Search Advisor · Google Search Central)
@@ -59,6 +59,9 @@ description: Use when creating or editing public web pages, page metadata (title
 - `meta viewport`(반응형), `meta charset` 이 서버 인코딩과 같게, h1 하나, 이미지 `alt`.
 - 링크는 `<a href="절대 또는 경로">` — `javascript:` 링크·onclick 이동·`#`/`#!` 조각 주소로 쪽을 나누지 않는다(네이버는 # 뒤를 버린다).
 - 검색에서 빼려면 `meta robots noindex` — 이때 robots.txt 로 막지 않는다(막으면 noindex 를 못 읽는다).
+- **다른 쪽에 iframe 으로만 끼워 쓰는 쪽**(Storybook `iframe.html?id=…`, 위젯·미리보기·embed 화면)은 `<meta name="robots" content="noindex, indexifembedded">` —
+  따로 검색 결과에 나오지 않고, 끼워 넣은 쪽의 일부로는 색인된다(구글 전용, `indexifembedded` 는 noindex 와 함께일 때만 효과). 빠뜨리면 쿼리 주소마다
+  "사용자가 선택한 표준이 없는 중복 페이지"로 쌓인다(관찰). 쿼리로 화면이 바뀌는 쪽이라 canonical 하나로 묶기보다 noindex 가 맞다.
 
 **사이트 전체**
 - `robots.txt`: 루트, `text/plain`, 2xx. 4xx 는 "모두 허용", 5xx 는 "모두 금지"로 해석된다. `Sitemap:` 줄. JS·CSS·파비콘 경로를 막지 않는다. 검색로봇 이름은 `Yeti`.
@@ -92,16 +95,32 @@ description: Use when creating or editing public web pages, page metadata (title
 
 - **제목·설명 길이 제한은 없다**(기기 폭에 맞춰 자른다). 네이버 40·80자를 지키면 구글에서도 문제없다. 구글은 title·h1·og:title·링크 글자 등을 보고 제목을 **바꿔서 보여 줄 수 있다** — 화면의 가장 큰 제목(h1)과 title 을 같은 뜻으로 맞춘다. 제목 언어는 본문 언어와 같게.
 - **사이트 이름**은 첫 화면의 `WebSite` JSON-LD(`name`, 필요하면 `alternateName`, `url`)로 정한다 — 첫 화면에만, 서브디렉터리는 불가. og:site_name·title 과 같은 이름을 쓴다.
-- **날짜**: 화면에 보이는 날짜("게시"·"수정")와 `datePublished`·`dateModified`(시간대 포함 ISO 8601)를 일치시킨다. 미래 날짜·사건 날짜 금지. 사이트맵 `lastmod` 는 본문·구조화 데이터·링크가 **의미 있게 바뀐 때만** — 부정확하면 구글이 무시한다. `priority`·`changefreq` 는 구글이 쓰지 않는다.
+- **날짜**: 화면에 보이는 날짜("게시"·"수정")와 `datePublished`·`dateModified`(시간대 포함 ISO 8601)를 일치시킨다. **수정 날짜는 쪽마다 따로 둔다** — 여러 쪽이 날짜 상수 하나를 함께 쓰면 한 쪽만 고쳐도 모든 쪽 날짜가 바뀌거나(내용 없이 날짜만 바뀜) 고친 쪽 날짜가 옛것으로 남는다. 공통 값 + 쪽별 덮어쓰기(`modified?`)면 충분하다. 미래 날짜·사건 날짜 금지. 사이트맵 `lastmod` 는 본문·구조화 데이터·링크가 **의미 있게 바뀐 때만** — 부정확하면 구글이 무시한다. `priority`·`changefreq` 는 구글이 쓰지 않는다.
 - **AI 개요·AI 모드**: 따로 할 일이 없다 — 색인되고 스니펫을 보여 줄 수 있으면 대상이다. 구글 검색은 **llms.txt 를 쓰지 않는다**(다른 AI 도구용으로 두는 건 괜찮음). 글을 잘게 쪼개거나 질문마다 쪽을 만드는 것은 효과가 없고, 대량으로 만들면 스팸 정책(scaled content abuse·doorway) 대상. `nosnippet`·`max-snippet`·`data-nosnippet` 은 AI 개요 인용도 막는다.
 - **canonical 은 힌트**다(리다이렉트 > canonical > 사이트맵 순으로 강함). 자기 자신을 가리키는 canonical 을 둔다, 절대 주소, JS 로 다른 값으로 바꾸지 않는다, # 조각 주소 금지.
-- **noindex 는 robots.txt 에 쓸 수 없다**(meta 또는 X-Robots-Tag). robots.txt 로 막힌 쪽도 링크가 있으면 주소만 색인될 수 있다.
+- **noindex 는 robots.txt 에 쓸 수 없다**(meta 또는 X-Robots-Tag). robots.txt 로 막힌 쪽도 링크가 있으면 주소만 색인될 수 있다. iframe 으로만 쓰는 쪽은 `noindex, indexifembedded`(위 점검표).
 - **리다이렉트**: 301·308 과 0초 meta refresh 는 영구, 302·307 과 지연 meta refresh 는 임시로 본다. JS 리다이렉트는 최후의 수단. 구글은 10번까지 따라가지만 네이버 기준(5번 미만)을 따른다. 주소를 옮기면 리다이렉트를 1년 이상 유지.
 - **크기**: Googlebot 은 HTML 의 앞 2MB 만 읽는다(압축 전). 사이트맵은 구글 50MB·5만 URL 이지만 네이버 10MB 를 따른다. robots.txt 는 500KiB.
 - **구조화 데이터**: 화면에 보이는 내용만 표시, JSON-LD 권장. `Article`/`BlogPosting` 은 필수 속성이 없고 headline·image(5만 픽셀 이상, 16:9·4:3·1:1)·datePublished·dateModified·author(name 에 이름만, url 또는 sameAs) 권장. `Organization` logo 는 112×112 이상. `BreadcrumbList` 는 ListItem 2개 이상, 첫 화면 항목은 없어도 된다.
 - **쓰지 않는 것**: `meta keywords`, `lang` 속성(본문으로 언어 판단), `rel=next/prev`, `noarchive`. 내용 길이·소제목 개수·E-E-A-T "점수" 같은 목표는 없다.
 - **Core Web Vitals**(순위에 쓰임): LCP 2.5초 이내, INP 200ms 미만, CLS 0.1 미만.
 - 반영에는 며칠~몇 주. Search Console 의 URL 검사로 수집 요청(같은 주소를 여러 번 요청해도 빨라지지 않음).
+
+## Search Console 색인 보고서 읽기 (색인 생성 › 페이지)
+
+**먼저 보고서 날짜를 본다.** 차트의 마지막 날짜가 내보낸 날보다 며칠 앞설 수 있다(관찰: 11/23 에 받은 보고서가 11/16 까지). 그 뒤에 고친 것은 아직 반영되지 않았으니 "안 고쳐졌다"고 판단하지 않는다.
+사유 이름만 보고 고치지 않는다 — 사유를 눌러 **주소 목록을 내보내기(CSV)** 로 받아 실제 주소부터 본다.
+
+| 사유 | 뜻(구글 도움말) | 할 일 |
+|---|---|---|
+| 발견됨 - 현재 색인이 생성되지 않음 | 주소는 알지만 아직 크롤링 안 함 | 새 사이트는 기다린다. 사이트맵·내부 `<a href>` 링크가 있는지만 확인 |
+| 크롤링됨 - 현재 색인이 생성되지 않음 | 가져갔지만 넣지 않음 — 구글은 모든 쪽을 색인하지 않고, 꼭 문제는 아님 | 제목을 바꾸지 않는다. 중요한 쪽이면 다른 쪽과 겹치지 않는 본문(표·예시·측정값)을 보강한 **뒤에** URL 검사로 한 번 요청 |
+| 사용자가 선택한 표준이 없는 중복 페이지 | 다른 쪽의 중복인데 canonical 이 없음 — 오류가 아니라 구글이 대표를 고른 것 | 주소를 본다. 내 쪽이면 자기 canonical, iframe·쿼리 주소처럼 검색 대상이 아니면 noindex(위), 정말 다른 쪽이면 내용을 다르게 |
+| 리디렉션이 포함된 페이지 | 다른 주소로 넘어가는 주소 | 의도한 301(http·www·옛 주소)이면 할 일 없음 — 도착 쪽의 색인 상태를 본다 |
+| 'noindex' 태그에 의해 제외됨 | noindex 를 읽고 뺌 | 의도한 것이면 정상. 아니면 태그를 지우고 URL 검사 › 실제 URL 테스트로 확인 후 요청 |
+
+- 고친 뒤 그 사유에서 **수정사항 확인**(Validate fix) — 그 사유가 있던 주소만 다시 보며, 보통 2주쯤, 더 걸릴 수도 있다(도움말).
+- 새 도메인 첫 몇 주는 "발견됨"·"크롤링됨"이 많은 게 보통이다. 숫자가 작을 때는 사유별 주소를 하나하나 보는 편이 비율보다 낫다.
 
 ## 자동 점검 도구
 

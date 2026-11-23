@@ -147,6 +147,24 @@
           "pattern": "(nosourceinfo[\\s\\S]{0,300}(넣지 마|넣을 (필요|이유)[가는]? 없|필요 없|필요하지 않|권하지 않)|(넣지 마|넣을 (필요|이유)[가는]? 없|필요 없|필요하지 않|권하지 않)[\\s\\S]{0,300}nosourceinfo)"
         }
       ]
+    },
+    {
+      "id": "embed-noindex",
+      "prompt": "Storybook 을 https://example.kr/storybook/ 에 배포했는데 구글 Search Console 색인 보고서에 https://example.kr/storybook/iframe.html?id=button--primary 같은 주소 여러 개가 '사용자가 선택한 표준이 없는 중복 페이지'로 떠. Storybook 의 .storybook/preview-head.html 에 넣을 태그를 HTML 코드 하나로 답해 줘. 파일은 만들지 말고 답에 코드만 보여 줘.",
+      "checks": [
+        {
+          "desc": "robots meta 에 noindex",
+          "type": "regex",
+          "pattern": "name=\"robots\"[^>]*content=\"[^\"]*noindex",
+          "in": "code"
+        },
+        {
+          "desc": "indexifembedded 함께",
+          "type": "regex",
+          "pattern": "name=\"robots\"[^>]*content=\"[^\"]*indexifembedded",
+          "in": "code"
+        }
+      ]
     }
   ]
 }
