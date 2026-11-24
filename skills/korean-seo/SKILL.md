@@ -1,6 +1,6 @@
 ---
 name: korean-seo
-description: Use when creating or editing public web pages, page metadata (title, meta description, canonical, Open Graph, favicon, site name, JSON-LD breadcrumbs/Article/WebSite), robots.txt, sitemaps, RSS feeds, publish/updated dates, Search Console page-indexing report reasons, or blog post titles/descriptions for a Korean-language site that should be found on Naver or Google search (including Google AI Overviews) — 네이버 검색 노출, 서치어드바이저, 구글 Search Console(색인 생성 안 됨·중복 페이지), 웹마스터 가이드, SEO, GEO, 검색 유입, 블로그 제목·설명 작성, 사이트맵·RSS 제출.
+description: Use when creating or editing public web pages, page metadata (title, meta description, canonical, Open Graph, favicon, site name, JSON-LD breadcrumbs/Article/WebSite), robots.txt, robots meta/noindex (including Storybook or iframe-embedded pages), sitemaps, RSS feeds, publish/updated dates (dateModified, sitemap lastmod — including scripts that change them), Search Console page-indexing report reasons, or blog post titles/descriptions for a site that should be found on Naver or Google search (especially Korean-language or .kr sites; including Google AI Overviews) — even when the answer is a single tag or snippet such as a favicon <link> or a robots meta tag — 네이버 검색 노출, 서치어드바이저, 구글 Search Console(색인 생성 안 됨·중복 페이지), noindex, 웹마스터 가이드, SEO, GEO, 검색 유입, 블로그 제목·설명 작성, 사이트맵·RSS 제출.
 ---
 
 # 네이버·구글 검색 노출 점검 (Naver Search Advisor · Google Search Central)
@@ -46,6 +46,7 @@ description: Use when creating or editing public web pages, page metadata (title
 | "Breadcrumb 첫 항목은 원래 '홈'이다" | 구글은 괜찮지만 네이버 가이드는 일반 낱말 대신 쪽을 설명하는 이름을 요구한다 |
 | "파비콘은 /favicon.svg 면 된다" | 네이버는 href 절대 경로를 요구하고, **구글이 적은 파비콘 형식(BMP·GIF·ICO·PNG·JPEG·PPM·TIFF)에 SVG 는 없다** — PNG(48px 넘게, 예: 96×96)나 ICO 를 쓴다 |
 | "AI 브리핑에 뜨려면 40자 직답·FAQ 쪽을 만들어야 한다" | 네이버는 AI 브리핑 출처 선정 기준을 공개하지 않았다. 그런 수치는 업계 관찰이지 공식 기준이 아니다 — 아래 "네이버 AI 브리핑" |
+| "iframe 으로만 쓰는 쪽(Storybook `iframe.html` 등)은 `noindex` 만 넣으면 된다" | 정확히 `<meta name="robots" content="noindex, indexifembedded">` — 두 값을 함께. noindex 만 넣으면 그 쪽을 끼워 쓴 문서 쪽에서도 내용이 빠진다(구글) |
 | "날짜만 오늘로 바꾸면 최신 글로 보인다" | 구글은 내용이 크게 바뀌지 않았는데 날짜를 바꾸는 것을 하지 말라고 하고, 부정확한 lastmod 는 아예 믿지 않는다. 실제로 고친 글만 날짜를 바꾼다 |
 
 ## 점검표
@@ -130,6 +131,8 @@ description: Use when creating or editing public web pages, page metadata (title
 # 배포된 사이트 — robots·301·404·사이트맵의 모든 쪽을 Yeti 이름으로 검사(표준 라이브러리만)
 # og:image 파일의 실제 크기·용량·비율, 같은 쪽을 일반 브라우저 이름으로 다시 받아 Yeti 와 비교(클로킹 의심), JS 없이 본문이 비는 쪽도 본다
 python3 scripts/check-site.py https://example.com            # --no-compare: 브라우저 비교 끄기(요청 절반)
+# --render: 설치된 Chrome 으로 자바스크립트 실행 전·후 비교(title·canonical·robots 를 JS 가 바꾸는지, h1·본문이 JS 로만 생기는지)
+# CRUX_API_KEY=… 를 주면 실제 사용자 Core Web Vitals(LCP·INP·CLS, 최근 28일 75%)도 — 방문이 적으면 "데이터 없음"
 
 # 마크다운 글 프론트매터 title·description — 길이 초과면 exit 1, 낱말 반복은 경고
 node scripts/check-meta.mjs src/content/posts
@@ -137,6 +140,8 @@ node scripts/check-meta.mjs src/content/posts
 
 낱말 반복 경고는 조사까지 붙여 세는 단순한 방식이라 "미디어 쿼리는 … 컨테이너 쿼리는" 같은 비교 문장도 잡는다 — 읽고 판단한다.
 "JS 없이 본문 글자 100자 미만" 은 검색 화면·짧은 목록 쪽처럼 원래 글이 적은 쪽도 잡는다 — 화면을 자바스크립트로만 그리는 쪽인지 확인한다.
+`--render` 결과에서 "본문 대부분이 JS 를 실행해야만 생김" 은 클라이언트 렌더링 쪽(Storybook·SPA)이다 — 검색 대상 쪽이면 서버 렌더링·정적 생성을 권하고,
+검색 대상이 아닌 도구 화면이면 그대로 둔다. "JS 가 canonical·robots 를 바꿈" 은 구글이 하지 말라고 한 것이라 고친다.
 "Yeti·브라우저 본문 글자 수가 크게 다름" 은 30% 넘게 다를 때다. 로그인·지역·A/B 테스트로 갈리는 쪽이면 검색로봇에게도 같은 내용을 주는지 본다.
 프로젝트에 맞게 `check-meta.mjs` 를 복사해 `check`/`lint` 스크립트에 넣으면 앞으로 쓰는 글도 막을 수 있다.
 

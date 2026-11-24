@@ -9,7 +9,7 @@
     {
       "name": "korean-seo",
       "description": "네이버 서치어드바이저 웹마스터 가이드 기준으로 웹 페이지 메타·사이트맵·RSS·블로그 글 제목을 점검하는 스킬",
-      "version": "0.5.1",
+      "version": "0.6.0",
       "source": "./",
       "category": "development",
       "tags": ["seo", "naver", "korean"]

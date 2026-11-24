@@ -10,7 +10,9 @@
 // - `--setting-sources project` 로 사용자 설정(설치한 플러그인 포함)을 읽지 않고, "있이" 는 `--plugin-dir <이 저장소>` 로
 //   작업 중인 스킬만 켠다 — 설치된 옛 버전이 아니라 지금 고친 것을 잰다.
 // - 답은 evals/results/<시각>/ 에 남는다(커밋 안 함). 사람이 읽고 판단할 것은 거기서 본다.
-// - 요청마다 실제로 모델을 부르므로 사용량이 든다. 경우 6개 × 2 = 12번이 기본.
+// - "있이" 에서 모델이 스킬을 실제로 불렀는지(Skill 도구 호출)도 남긴다 — 작은 모델은 스킬을 부르지 않고 답하기도 해서,
+//   점수가 떨어졌을 때 "스킬 내용이 약한지" 와 "스킬이 켜지지 않았는지(description 문제)" 를 가른다.
+// - 요청마다 실제로 모델을 부르므로 사용량이 든다. 경우 7개 × 2 = 14번이 기본.
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -70,15 +72,39 @@ export function check(answer, c) {
   }
 }
 
+/** stream-json 출력 → { text: 마지막 답, skill: korean-seo 스킬을 불렀는지 } */
+export function parseStream(stdout) {
+  let text = '';
+  let skill = false;
+  for (const line of stdout.split('\n')) {
+    let event;
+    try {
+      event = JSON.parse(line);
+    } catch {
+      continue;
+    }
+    if (event.type === 'assistant') {
+      for (const part of event.message?.content ?? []) {
+        if (part.type === 'tool_use' && part.name === 'Skill' && String(part.input?.skill ?? '').includes('korean-seo')) {
+          skill = true;
+        }
+      }
+    }
+    if (event.type === 'result') text = event.result ?? '';
+  }
+  return { text, skill };
+}
+
 function ask(prompt, mode) {
   const cwd = mkdtempSync(join(tmpdir(), 'korean-seo-eval-'));
-  const cli = ['-p', prompt, '--setting-sources', 'project'];
+  const cli = ['-p', prompt, '--setting-sources', 'project', '--output-format', 'stream-json', '--verbose'];
   if (mode === 'with') cli.push('--plugin-dir', root);
   if (model) cli.push('--model', model);
-  const r = spawnSync('claude', cli, { cwd, encoding: 'utf8', timeout: 10 * 60 * 1000, maxBuffer: 1 << 24 });
+  const r = spawnSync('claude', cli, { cwd, encoding: 'utf8', timeout: 10 * 60 * 1000, maxBuffer: 1 << 26 });
   rmSync(cwd, { recursive: true, force: true });
   if (r.error) throw r.error;
-  return r.stdout + (r.status ? `\n\n[exit ${r.status}] ${r.stderr}` : '');
+  const { text, skill } = parseStream(r.stdout);
+  return { text: text + (r.status ? `\n\n[exit ${r.status}] ${r.stderr}` : ''), skill };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
@@ -92,12 +118,21 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
         const file = join(out, `${kase.id}-${mode}-${n}.md`);
         if (regrade && !existsSync(file)) continue;
         process.stderr.write(`${kase.id} ${mode} ${n}/${runs} … `);
-        const text = regrade ? readFileSync(file, 'utf8') : ask(kase.prompt, mode);
-        if (!regrade) writeFileSync(file, text);
+        const meta = file.replace(/\.md$/, '.json');
+        let text, skill;
+        if (regrade) {
+          text = readFileSync(file, 'utf8');
+          // 0.6.0 전에 저장한 답은 호출 기록이 없다
+          skill = existsSync(meta) ? JSON.parse(readFileSync(meta, 'utf8')).skill : null;
+        } else {
+          ({ text, skill } = ask(kase.prompt, mode));
+          writeFileSync(file, text);
+          writeFileSync(meta, JSON.stringify({ skill }));
+        }
         const results = kase.checks.map((c) => ({ ...c, ...check(text, c) }));
         const passed = results.filter((r) => r.ok).length;
-        process.stderr.write(`${passed}/${results.length}\n`);
-        summary.push({ id: kase.id, mode, n, passed, total: results.length, results });
+        process.stderr.write(`${passed}/${results.length}${mode === 'with' ? (skill ? ' (스킬 호출)' : ' (스킬 안 부름)') : ''}\n`);
+        summary.push({ id: kase.id, mode, n, passed, total: results.length, skill, results });
       }
     }
   }
@@ -117,5 +152,10 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       };
       console.log(`| ${kase.id} | ${c.desc} | ${cell('without')} | ${cell('with')} |`);
     });
+    // 있이에서 스킬을 부른 횟수 — 낮으면 SKILL.md description 이 그 요청을 덮지 못한 것
+    const called = summary.filter((s) => s.id === kase.id && s.mode === 'with' && s.skill !== null);
+    if (called.length) {
+      console.log(`| ${kase.id} | (스킬을 부른 횟수) | — | ${called.filter((s) => s.skill).length}/${called.length} |`);
+    }
   }
 }
